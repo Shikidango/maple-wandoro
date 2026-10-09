@@ -415,6 +415,22 @@ async function checkInvitation() {
   document.getElementById('loginArea').hidden = true;
 }
 
+db.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const query = new URLSearchParams(window.location.search);
+
+    const isInvitation =
+      hash.get('type') === 'invite' ||
+      query.get('type') === 'invite';
+
+    if (isInvitation && session) {
+      document.getElementById('initialPasswordArea').hidden = false;
+      document.getElementById('loginArea').hidden = true;
+    }
+  }
+});
+
 (async()=>{
   try {
     await Promise.all([refreshData(), refreshAdmin()]);
