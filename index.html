@@ -293,6 +293,7 @@ async function refreshCooldowns() {
     list.appendChild(row);
   }
 }
+
 async function refreshAdmin(){
   const {data:{user},error}=await db.auth.getUser();
   if(error)console.warn(error);
