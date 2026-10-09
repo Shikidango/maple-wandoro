@@ -254,8 +254,45 @@ async function refreshCooldowns() {
     label.textContent =
       `${categoryNames[item.category] || 'その他'}：${item.topic}（残り${item.remaining_count}回）`;
 
+    // お題ごとの解除ボタン
+    const resetButton = document.createElement('button');
+    resetButton.type = 'button';
+    resetButton.textContent = '解除';
+    resetButton.className = 'secondary';
+
+    resetButton.style.cssText =
+      'margin-left:12px; padding:5px 12px; font-size:13px;';
+
+    resetButton.onclick = async () => {
+      const ok = confirm(
+        `「${item.topic}」のクールタイムを解除しますか？`
+      );
+
+      if (!ok) return;
+
+      resetButton.disabled = true;
+
+      const { error } = await db.rpc('reset_wandoro_cooldown', {
+        p_category: item.category,
+        p_topic: item.topic
+      });
+
+      if (error) {
+        console.error('個別解除エラー:', error);
+        alert('解除に失敗しました: ' + error.message);
+        resetButton.disabled = false;
+        return;
+      }
+
+      await refreshCooldowns();
+      await refreshData();
+    };
+
     row.appendChild(label);
+    row.appendChild(resetButton);
     list.appendChild(row);
+  }
+}
   }
 }
 async function refreshAdmin(){
