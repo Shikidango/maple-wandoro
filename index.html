@@ -209,7 +209,10 @@ async function saveSharedSettings(){
 }
 async function resetSharedHistory(){
   if(!isAdmin||!confirm('全員の抽選履歴をすべて削除します。元に戻せません。よろしいですか？'))return;
-  const {error}=await db.rpc('reset_wandoro_history');
+　const {error}=await db
+  .from('wandoro_history')
+  .delete()
+  .gte('id', 0);
   if(error){alert('削除失敗: '+error.message);return;}
   [1,2,3].forEach(k=>$('display'+k).textContent='？？？');$('resultText').textContent='まだ抽選していません';
   await refreshData();
