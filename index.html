@@ -156,6 +156,23 @@ async function testSupabaseConnection() {
 
 testSupabaseConnection();
 
+async function loadSharedListsTest() {
+  const { data, error } = await db
+    .from("wandoro_settings")
+    .select("jobs, npcs, anything, cooldown_count")
+    .eq("id", 1)
+    .single();
+
+  if (error) {
+    console.error("お題リスト取得エラー:", error.message);
+    return;
+  }
+
+  console.log("共有お題リスト取得成功！", data);
+}
+
+loadSharedListsTest();
+
 let jobs = [
   "冒険者","ヒーロー","パラディン","ダークナイト","アークメイジ(火、毒)",
   "アークメイジ(氷、雷)","ビショップ","ボウマスター","クロスボウマスター",
