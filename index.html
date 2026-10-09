@@ -116,7 +116,7 @@
     🔄 一覧を更新
   </button>
 
-  <div id="cooldownList" style="margin-top:14px">
+  <div id="adminCooldownList" style="margin-top:14px">
     読み込み待ち...
   </div>
 </div>
@@ -209,7 +209,7 @@ async function runSpin(category){
   finally{busy=false;setButtons();}
 }
 async function refreshCooldowns() {
-  const list = document.getElementById('cooldownList');
+  const list = document.getElementById('adminCooldownList');
   if (!list) return;
 
   if (!isAdmin) {
