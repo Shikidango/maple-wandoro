@@ -82,6 +82,30 @@
     <div id="loginArea"><div class="login-grid"><div><label for="adminEmail">メールアドレス</label><input id="adminEmail" type="email" autocomplete="username"></div><div><label for="adminPassword">パスワード</label><input id="adminPassword" type="password" autocomplete="current-password"></div></div>
       <button onclick="adminLogin()">ログイン</button>
     </div>
+   <div id="initialPasswordArea" hidden>
+  <h3>🔑 初回パスワード設定</h3>
+  <p>招待された管理者さんは、新しいパスワードを設定してください。</p>
+
+  <label for="initialPassword">新しいパスワード（8文字以上）</label>
+  <input
+    id="initialPassword"
+    type="password"
+    autocomplete="new-password"
+    minlength="8"
+  >
+
+  <label for="initialPasswordConfirm">パスワードの確認</label>
+  <input
+    id="initialPasswordConfirm"
+    type="password"
+    autocomplete="new-password"
+    minlength="8"
+  >
+
+  <button type="button" onclick="setInitialPassword()">
+    🔑 パスワードを設定
+  </button>
+</div>
     <div id="adminLoggedIn" hidden><p id="adminIdentity" class="muted"></p><button class="secondary" onclick="adminLogout()">ログアウト</button></div>
     <div id="adminControls" class="admin-only">
       <h3>⚙ 共通お題リストの編集</h3>
@@ -313,6 +337,43 @@ async function adminLogin(){
   if(error){alert('ログイン失敗: '+error.message);return;}
   $('adminPassword').value='';await refreshAdmin();
 }
+async function setInitialPassword() {
+  const password = document.getElementById('initialPassword').value;
+  const confirmPassword = document.getElementById('initialPasswordConfirm').value;
+
+  if (password.length < 8) {
+    alert('パスワードは8文字以上にしてください');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert('確認用パスワードが一致しません');
+    return;
+  }
+
+  const { data: { user }, error: userError } = await db.auth.getUser();
+
+  if (userError || !user) {
+    alert('招待リンクの認証を確認できませんでした。招待メールから開き直してください。');
+    return;
+  }
+
+  const { error } = await db.auth.updateUser({
+    password: password
+  });
+
+  if (error) {
+    alert('パスワード設定に失敗しました: ' + error.message);
+    return;
+  }
+
+  document.getElementById('initialPassword').value = '';
+  document.getElementById('initialPasswordConfirm').value = '';
+  document.getElementById('initialPasswordArea').hidden = true;
+
+  alert('パスワードを設定しました！');
+  await refreshAdmin();
+}
 async function adminLogout(){await db.auth.signOut();await refreshAdmin();}
 async function saveSharedSettings(){
   if(!isAdmin)return;
@@ -332,9 +393,39 @@ async function resetSharedHistory(){
   [1,2,3].forEach(k=>$('display'+k).textContent='？？？');$('resultText').textContent='まだ抽選していません';
   await refreshData();
 }
+
+async function checkInvitation() {
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  const query = new URLSearchParams(window.location.search);
+
+  const isInvitation =
+    hash.get('type') === 'invite' ||
+    query.get('type') === 'invite';
+
+  if (!isInvitation) return;
+
+  const { data, error } = await db.auth.getSession();
+
+  if (error || !data.session) {
+    alert('招待リンクの認証を確認できませんでした。招待メールから開き直してください。');
+    return;
+  }
+
+  document.getElementById('initialPasswordArea').hidden = false;
+  document.getElementById('loginArea').hidden = true;
+}
+
 (async()=>{
-  try{await Promise.all([refreshData(),refreshAdmin()]);}
-  catch(e){console.error(e);setStatus('初期化に失敗しました: '+e.message);}
-  setInterval(()=>{if(!busy && document.visibilityState==='visible')refreshData();},15000);
+  try {
+    await Promise.all([refreshData(), refreshAdmin()]);
+    await checkInvitation();
+  } catch(e) {
+    console.error(e);
+    setStatus('初期化に失敗しました: '+e.message);
+  }
+
+  setInterval(()=>{
+    if(!busy && document.visibilityState==='visible') refreshData();
+  },15000);
 })();
 </script></body></html>
