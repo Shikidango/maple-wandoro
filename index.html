@@ -87,10 +87,39 @@
       <h3>⚙ 共通お題リストの編集</h3>
       <div class="editgrid"><div><label for="jobs">① 職業（1行に1件）</label><textarea id="jobs"></textarea></div><div><label for="npc">② NPC（1行に1件）</label><textarea id="npc"></textarea></div></div>
       <div style="margin-top:14px"><label for="anything">③ なんでも（1行に1件）</label><textarea id="anything"></textarea></div>
-      <div style="margin-top:14px"><label for="cooldown">再登場防止回数</label><select id="cooldown"><option value="3">3回</option><option value="4">4回</option><option value="5">5回</option></select></div>
+     <div style="margin-top:14px">
+  <label for="cooldown">再登場防止回数</label>
+  <select id="cooldown">
+    <option value="1">1回</option>
+    <option value="2">2回</option>
+    <option value="3">3回</option>
+    <option value="4">4回</option>
+    <option value="5">5回</option>
+    <option value="6">6回</option>
+    <option value="7">7回</option>
+    <option value="8">8回</option>
+    <option value="9">9回</option>
+    <option value="10">10回</option>
+  </select>
+</div>
       <button class="save" onclick="saveSharedSettings()">💾 共有設定を保存</button>
       <p class="note">保存すると全員の設定に反映されます。各リストは最低1件必要です。</p>
       <button class="danger" onclick="resetSharedHistory()">🗑️ 全員の抽選履歴をリセット</button>
+     <div id="cooldownPanel" style="margin-top:24px">
+  <h3>⏳ 現在のクールタイム一覧</h3>
+  <p class="note">
+    クールタイム中のお題と残り回数を表示します。
+    管理者はお題ごとに個別解除できます。
+  </p>
+
+  <button type="button" onclick="refreshCooldowns()">
+    🔄 一覧を更新
+  </button>
+
+  <div id="cooldownList" style="margin-top:14px">
+    読み込み待ち...
+  </div>
+</div>
     </div>
   </details>
 </div>
@@ -178,6 +207,56 @@ async function runSpin(category){
     await refreshData();
   }catch(e){console.error(e);setStatus('抽選エラー: '+e.message);alert('抽選に失敗しました：'+e.message);}
   finally{busy=false;setButtons();}
+}
+async function refreshCooldowns() {
+  const list = document.getElementById('cooldownList');
+  if (!list) return;
+
+  if (!isAdmin) {
+    list.textContent = '管理者のみ確認できます。';
+    return;
+  }
+
+  list.textContent = '読み込み中...';
+
+  const { data, error } = await db
+    .from('wandoro_cooldowns')
+    .select('category, topic, remaining_count')
+    .gt('remaining_count', 0)
+    .order('category')
+    .order('topic');
+
+  if (error) {
+    console.error('クールタイム取得エラー:', error);
+    list.textContent = '取得に失敗しました: ' + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    list.textContent = '現在クールタイム中のお題はありません。';
+    return;
+  }
+
+  const categoryNames = {
+    1: '① 職業',
+    2: '② NPC',
+    3: '③ なんでも'
+  };
+
+  list.replaceChildren();
+
+  for (const item of data) {
+    const row = document.createElement('div');
+    row.style.cssText =
+      'padding:10px; margin:6px 0; background:#f7f4ef; border-radius:10px;';
+
+    const label = document.createElement('span');
+    label.textContent =
+      `${categoryNames[item.category] || 'その他'}：${item.topic}（残り${item.remaining_count}回）`;
+
+    row.appendChild(label);
+    list.appendChild(row);
+  }
 }
 async function refreshAdmin(){
   const {data:{user},error}=await db.auth.getUser();
