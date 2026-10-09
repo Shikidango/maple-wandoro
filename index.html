@@ -133,6 +133,29 @@ const db = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
+
+async function testSupabaseConnection() {
+  const { data, error } = await db
+    .from("wandoro_settings")
+    .select("id")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Supabase接続エラー:", error.message);
+    alert("接続エラー: " + error.message);
+    return;
+  }
+
+  if (data) {
+    console.log("Supabase接続成功！", data);
+  } else {
+    console.log("接続成功。ただし設定データがありません。");
+  }
+}
+
+testSupabaseConnection();
+
 let jobs = [
   "冒険者","ヒーロー","パラディン","ダークナイト","アークメイジ(火、毒)",
   "アークメイジ(氷、雷)","ビショップ","ボウマスター","クロスボウマスター",
