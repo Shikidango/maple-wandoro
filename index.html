@@ -124,8 +124,15 @@
     <div class="note">※この試作品ではブラウザ内に保存されます。①職業はサンプル固定リストです。</div>
   </details>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = "https://awrteoyotlmyolkzruan.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_gMtNxYscEOOtv2bzAqvJCw_-F-bWiP1";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 let jobs = [
   "冒険者","ヒーロー","パラディン","ダークナイト","アークメイジ(火、毒)",
   "アークメイジ(氷、雷)","ビショップ","ボウマスター","クロスボウマスター",
