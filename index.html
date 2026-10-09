@@ -1,8 +1,5 @@
 <!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>メイプル ワンドロお題ルーレット</title>
 <style>
   *{box-sizing:border-box}
@@ -42,439 +39,184 @@
   .rolling{animation:shake .12s infinite alternate}
   @keyframes shake{from{transform:translateY(-2px)}to{transform:translateY(2px)}}
   @media(max-width:800px){.slots{grid-template-columns:1fr}.editgrid{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
+
+  .status{margin:0 0 15px;text-align:center;color:#746c64;font-size:13px}
+  .toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:15px}
+  .secondary{background:#81786f;font-size:13px;padding:8px 12px}
+  .danger{background:#a04c49}
+  button:disabled{opacity:.5;cursor:wait}
+  .history-row{display:grid;grid-template-columns:155px 1fr;gap:8px;padding:10px 4px;border-bottom:1px solid #eee5dc;font-size:14px}
+  .history-row:last-child{border:0}
+  .muted{color:#81786f;font-size:13px}
+  .admin-panel{margin-top:18px}
+  .login-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  input[type=email],input[type=password]{width:100%;padding:11px;border:1px solid #cfc6bb;border-radius:10px;font-size:15px}
+  .admin-only{display:none}
+  .admin-only.visible{display:block}
+  .setup-banner{border:2px solid #b56b3c;background:#fff9f2;border-radius:15px;padding:18px;margin:0 0 20px}
+  .setup-banner[hidden]{display:none}
+  .slot button:disabled{cursor:not-allowed}
+  @media(max-width:800px){.login-grid{grid-template-columns:1fr}.history-row{grid-template-columns:1fr}}
+</style></head><body>
 <div class="wrap">
   <h1>🍁 メイプル ワンドロお題ルーレット</h1>
   <p class="sub">①職業・②NPC・③なんでもを好きな組み合わせで使おう！</p>
-
+  <p id="status" class="status" role="status">共有設定を読み込み中…</p>
+  <div id="setupBanner" class="setup-banner" hidden><strong>⚙ 初回設定が必要です</strong><p>お題リストがまだ登録されていません。管理者がログインして初期設定を保存すると、全員が抽選できます。</p><button onclick="document.getElementById('adminPanel').open=true;document.getElementById('adminPanel').scrollIntoView({behavior:'smooth'})">管理者設定へ</button></div>
   <div class="slots">
-    <section class="slot">
-      <h2>① 職業</h2>
-      <div class="desc">固定リストからランダム</div>
-      <div id="display1" class="display">？？？</div>
-      <button onclick="spin(1)">①を回す</button>
-    </section>
-    <section class="slot">
-      <h2>② NPC</h2>
-      <div class="desc">登録したNPCからランダム</div>
-      <div id="display2" class="display">？？？</div>
-      <button onclick="spin(2)">②を回す</button>
-    </section>
-    <section class="slot">
-      <h2>③ なんでも</h2>
-      <div class="desc">モンスター・町・スキル・アイテムなど</div>
-      <div id="display3" class="display">？？？</div>
-      <button onclick="spin(3)">③を回す</button>
-    </section>
+    <section class="slot"><h2>① 職業</h2><div class="desc">共有リストからランダム</div><div id="display1" class="display">？？？</div><button class="spin-btn" onclick="spin(1)" disabled>①を回す</button></section>
+    <section class="slot"><h2>② NPC</h2><div class="desc">共有リストからランダム</div><div id="display2" class="display">？？？</div><button class="spin-btn" onclick="spin(2)" disabled>②を回す</button></section>
+    <section class="slot"><h2>③ なんでも</h2><div class="desc">モンスター・町・スキル・アイテムなど</div><div id="display3" class="display">？？？</div><button class="spin-btn" onclick="spin(3)" disabled>③を回す</button></section>
   </div>
-
-  <button class="all" onclick="spinAll()">🎰 3つまとめて回す！</button>
-
-  <section class="result">
-    <h2>今回のお題</h2>
-    <div id="resultText" class="resultText">まだ抽選していません</div>
-  </section>
-
-  <section class="result">
-    <h2>🔄 お題の再登場防止</h2>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <label for="cooldown" style="margin:0">出たお題を</label>
-      <select id="cooldown" onchange="saveCooldown()" style="border:1px solid #cfc6bb;border-radius:10px;padding:9px 12px;font-size:15px">
-        <option value="1">1回</option>
-        <option value="2">2回</option>
-        <option value="3">3回</option>
-        <option value="4">4回</option>
-        <option value="5">5回</option>
-        <option value="6">6回</option>
-        <option value="7">7回</option>
-        <option value="8">8回</option>
-        <option value="9">9回</option>
-        <option value="10" selected>10回</option>
-      </select>
-      <span>の間、同じカテゴリから出さない</span>
-    </div>
-    <div class="note">※①職業・②NPC・③なんでも、それぞれ別々に履歴を管理します。</div>
-
+  <button class="all spin-btn" onclick="spinAll()" disabled>🎰 3つまとめて回す！</button>
+  <section class="result"><h2>今回のお題</h2><div id="resultText" class="resultText">まだ抽選していません</div></section>
+  <section class="result"><div class="toolbar"><h2>🔄 お題の再登場防止</h2><span class="muted">共有設定：直近 <strong id="cooldownDisplay">3</strong> 回の同カテゴリ抽選を除外</span></div>
+    <div class="note">①②③それぞれ別々に管理。候補が足りないときは再登場する場合があります。</div>
     <div id="cooldownList" class="cooldown-list"></div>
-
-    <button type="button" style="margin-top:12px;background:#81786f" onclick="resetHistory()">🗑️ すべての履歴をリセット</button>
   </section>
-
-  <details>
-    <summary>⚙ お題リストを編集する</summary>
-    <div class="editgrid">
-      <div>
-        <label for="npc">② NPC</label>
-        <textarea id="npc" placeholder="1行に1候補&#10;例：シグナス&#10;アレックス&#10;ルシード"></textarea>
-      </div>
-      <div>
-        <label for="anything">③ なんでも</label>
-        <textarea id="anything" placeholder="1行に1候補&#10;例：オクトパス&#10;ヘネシス&#10;焼き栗帽子"></textarea>
-      </div>
+  <section class="result"><div class="toolbar"><h2>📜 みんなの抽選履歴</h2><button class="secondary" onclick="refreshData()">↻ 履歴を更新</button></div>
+    <div id="historyList" class="muted">読み込み中…</div>
+  </section>
+  <details id="adminPanel" class="admin-panel"><summary>🔐 管理者ログイン・お題設定</summary>
+    <p class="note">お題リストの変更・履歴のリセットは、Supabaseで管理者登録されたアカウントだけが実行できます。</p>
+    <div id="loginArea"><div class="login-grid"><div><label for="adminEmail">メールアドレス</label><input id="adminEmail" type="email" autocomplete="username"></div><div><label for="adminPassword">パスワード</label><input id="adminPassword" type="password" autocomplete="current-password"></div></div>
+      <button onclick="adminLogin()">ログイン</button>
     </div>
-    <details class="joblist">
-      <summary>① 職業の登録内容を編集する</summary>
-      <textarea id="jobs" placeholder="1行に1候補&#10;例：ハヤト&#10;ララ&#10;アデル"></textarea>
-      <button class="save" onclick="saveJobs()">💾 職業リストを保存</button>
-      <div class="note">※①も自由に追加・削除・変更できます。</div>
-    </details>
-    <button class="save" onclick="saveLists()">💾 リストを保存</button>
-    <div class="note">※この試作品ではブラウザ内に保存されます。①職業はサンプル固定リストです。</div>
+    <div id="adminLoggedIn" hidden><p id="adminIdentity" class="muted"></p><button class="secondary" onclick="adminLogout()">ログアウト</button></div>
+    <div id="adminControls" class="admin-only">
+      <h3>⚙ 共通お題リストの編集</h3>
+      <div class="editgrid"><div><label for="jobs">① 職業（1行に1件）</label><textarea id="jobs"></textarea></div><div><label for="npc">② NPC（1行に1件）</label><textarea id="npc"></textarea></div></div>
+      <div style="margin-top:14px"><label for="anything">③ なんでも（1行に1件）</label><textarea id="anything"></textarea></div>
+      <div style="margin-top:14px"><label for="cooldown">再登場防止回数</label><select id="cooldown"><option value="3">3回</option><option value="4">4回</option><option value="5">5回</option></select></div>
+      <button class="save" onclick="saveSharedSettings()">💾 共有設定を保存</button>
+      <p class="note">保存すると全員の設定に反映されます。各リストは最低1件必要です。</p>
+      <button class="danger" onclick="resetSharedHistory()">🗑️ 全員の抽選履歴をリセット</button>
+    </div>
   </details>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://awrteoyotlmyolkzruan.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_gMtNxYscEOOtv2bzAqvJCw_-F-bWiP1";
-
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
-async function testSupabaseConnection() {
-  const { data, error } = await db
-    .from("wandoro_settings")
-    .select("id")
-    .eq("id", 1)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Supabase接続エラー:", error.message);
-    alert("接続エラー: " + error.message);
-    return;
-  }
-
-  if (data) {
-    console.log("Supabase接続成功！", data);
-  } else {
-    console.log("接続成功。ただし設定データがありません。");
-  }
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const defaultJobs = ["冒険者", "ヒーロー", "パラディン", "ダークナイト", "アークメイジ(火、毒)", "アークメイジ(氷、雷)", "ビショップ", "ボウマスター", "クロスボウマスター", "パスファインダー", "ナイトロード", "シャドー", "デュアルブレイド", "キャプテン", "バイパー", "キャノンシューター", "ソウルマスター", "フレイムウィザード", "ウィンドシューター", "ナイトウォーカー", "ストライカー", "ミハエル", "アラン", "エヴァン", "メルセデス", "ファントム", "ルミナス", "隠月", "デーモンスレイヤー", "デーモンアヴェンジャー", "バトルメイジ", "ワイルドハンター", "ゼノン", "メカニック", "カイザー", "カデナ", "エンジェリックバスター", "アデル", "イリウム", "カーリー", "アーク", "パスファインダー", "虎影", "ララ", "キネシス", "ハヤト", "カンナ", "ビーストテイマー", "ゼロ"];
+const defaultNPCs = ["シグナス", "アレックス", "ルシード", "ヘレナ", "リリン"];
+const defaultAnything = ["オクトパス", "ヘネシス", "焼き栗帽子", "メイプルヒーロー", "エリニア"];
+let settings = null;
+let historyRows = [];
+let busy = false;
+let isAdmin = false;
+const labels = {1:'① 職業',2:'② NPC',3:'③ なんでも'};
+const columns = {1:'job',2:'npc',3:'anything'};
+const $ = id => document.getElementById(id);
+function escapeHtml(v){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+function setStatus(t){$('status').textContent=t;}
+function parseLines(id){return [...new Set($(id).value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))];}
+function canSpin(){return !!settings && ['jobs','npcs','anything'].every(k=>Array.isArray(settings[k])&&settings[k].length>0);}
+function setButtons(){document.querySelectorAll('.spin-btn').forEach(b=>b.disabled=busy||!canSpin());}
+function fillEditor(){
+  if(!settings)return;
+  $('jobs').value=(settings.jobs||[]).join('\n');$('npc').value=(settings.npcs||[]).join('\n');$('anything').value=(settings.anything||[]).join('\n');
+  $('cooldown').value=String(settings.cooldown_count||3);
 }
-
-testSupabaseConnection();
-
-async function loadSharedListsTest() {
-  const { data, error } = await db
-    .from("wandoro_settings")
-    .select("jobs, npcs, anything, cooldown_count")
-    .eq("id", 1)
-    .single();
-
-  if (error) {
-    console.error("お題リスト取得エラー:", error.message);
-    return;
-  }
-
-  console.log("共有お題リスト取得成功！", data);
+async function refreshData(){
+  const [sr,hr] = await Promise.all([
+    db.from('wandoro_settings').select('jobs,npcs,anything,cooldown_count').eq('id',1).single(),
+    db.from('wandoro_history').select('id,job,npc,anything,drawn_at').order('id',{ascending:false}).limit(100)
+  ]);
+  if(sr.error||hr.error){setStatus('読み込みに失敗しました。再読み込みしてください。');console.error(sr.error||hr.error);return;}
+  settings=sr.data;historyRows=hr.data||[];
+  $('cooldownDisplay').textContent=String(settings.cooldown_count);
+  $('setupBanner').hidden=canSpin();
+  renderHistory();renderCooldown();setButtons();
+  setStatus(canSpin()?'✓ 共有設定を読み込みました。抽選結果は全員で共有されます。':'⚠ 管理者による初回お題設定を待っています。');
 }
-
-loadSharedListsTest();
-
-let jobs = [
-  "冒険者","ヒーロー","パラディン","ダークナイト","アークメイジ(火、毒)",
-  "アークメイジ(氷、雷)","ビショップ","ボウマスター","クロスボウマスター",
-  "パスファインダー","ナイトロード","シャドー","デュアルブレイド",
-  "キャプテン","バイパー","キャノンシューター","ソウルマスター",
-  "フレイムウィザード","ウィンドシューター","ナイトウォーカー",
-  "ストライカー","ミハエル","アラン","エヴァン","メルセデス","ファントム",
-  "ルミナス","隠月","デーモンスレイヤー","デーモンアヴェンジャー",
-  "バトルメイジ","ワイルドハンター","ゼノン","メカニック","カイザー",
-  "カデナ","エンジェリックバスター","アデル","イリウム","カーリー",
-  "アーク","パスファインダー","虎影","ララ","キネシス","ハヤト",
-  "カンナ","ビーストテイマー","ゼロ"
-];
-
-let lists = {
-  npc: ["シグナス","アレックス","ルシード","ヘレナ","リリン"],
-  anything: ["オクトパス","ヘネシス","焼き栗帽子","メイプルヒーロー","エリニア"]
-};
-
-// 各カテゴリの直近の当選履歴
-let recentHistory = {1:[], 2:[], 3:[]};
-let cooldownCount = 10;
-
-function loadLists(){
-  try{
-    const saved = JSON.parse(localStorage.getItem("mapleWandoroLists"));
-    if(saved?.jobs?.length) jobs=saved.jobs;
-    if(saved?.npc?.length) lists.npc=saved.npc;
-    if(saved?.anything?.length) lists.anything=saved.anything;
-  }catch(e){}
-  document.getElementById("jobs").value=jobs.join("\n");
-  document.getElementById("npc").value=lists.npc.join("\n");
-  document.getElementById("anything").value=lists.anything.join("\n");
-
-  try{
-    const savedCooldown=Number(localStorage.getItem("mapleWandoroCooldown"));
-    if(Number.isInteger(savedCooldown) && savedCooldown>=1 && savedCooldown<=10) cooldownCount=savedCooldown;
-    const savedHistory=JSON.parse(localStorage.getItem("mapleWandoroHistory"));
-    if(savedHistory){
-      [1,2,3].forEach(n=>{
-        if(Array.isArray(savedHistory[n])){
-          recentHistory[n]=savedHistory[n].map(entry=>{
-            if(typeof entry==="string"){
-              return {value:entry, remaining:cooldownCount};
-            }
-            return {
-              value:entry.value,
-              remaining:Number(entry.remaining)||cooldownCount
-            };
-          }).filter(entry=>entry.value && entry.remaining>0);
-        }
-      });
-    }
-  }catch(e){}
-  document.getElementById("cooldown").value=String(cooldownCount);
+function renderHistory(){
+  $('historyList').innerHTML=historyRows.length?historyRows.slice(0,30).map(h=>{
+    const date=new Date(h.drawn_at).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
+    const parts=[h.job&&'① '+escapeHtml(h.job),h.npc&&'② '+escapeHtml(h.npc),h.anything&&'③ '+escapeHtml(h.anything)].filter(Boolean).join('　');
+    return '<div class="history-row"><span class="muted">'+escapeHtml(date)+'</span><span>'+parts+'</span></div>';
+  }).join(''):'まだ抽選履歴はありません';
 }
-function saveJobs(){
-  const values=document.getElementById("jobs").value.split("\n").map(x=>x.trim()).filter(Boolean);
-  if(!values.length){ alert("職業を1つ以上登録してください！"); return; }
-  jobs=values;
-  const saved={jobs, npc:lists.npc, anything:lists.anything};
-  localStorage.setItem("mapleWandoroLists",JSON.stringify(saved));
-  alert("職業リストを保存しました！");
+function renderCooldown(){
+  const n=Number(settings?.cooldown_count||3);
+  $('cooldownList').innerHTML=[1,2,3].map(k=>{
+    const col=columns[k];
+    const values=historyRows.map(r=>r[col]).filter(Boolean).slice(0,n);
+    return '<div class="cooldown-group"><h3>'+labels[k]+'</h3>'+(values.length?values.map((v,i)=>'<div class="cooldown-item"><span class="name">'+escapeHtml(v)+'</span><span class="remain">直近 '+(i+1)+' 回目</span></div>').join(''):'<div class="cooldown-empty">最近の抽選はありません</div>')+'</div>';
+  }).join('');
 }
-function saveLists(){
-  lists.npc=document.getElementById("npc").value.split("\n").map(x=>x.trim()).filter(Boolean);
-  lists.anything=document.getElementById("anything").value.split("\n").map(x=>x.trim()).filter(Boolean);
-  localStorage.setItem("mapleWandoroLists",JSON.stringify({jobs, npc:lists.npc, anything:lists.anything}));
-  alert("お題リストを保存しました！");
-}
-function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
-
-function getList(n){
-  if(n===1)return jobs;
-  if(n===2)return lists.npc;
-  return lists.anything;
-}
-
-// 直近の履歴にあるお題を候補から除外
-function getAvailableList(n){
-  const arr=getList(n);
-  if(!arr.length)return [];
-
-  const history=recentHistory[n] || [];
-  let available=arr.filter(item=>!history.some(entry=>entry.value===item));
-
-  // 候補が全部除外される場合は、古い履歴から順に解除して抽選可能にする
-  if(!available.length){
-    const relaxed=history.slice();
-    while(!available.length && relaxed.length){
-      relaxed.shift();
-      available=arr.filter(item=>!relaxed.some(entry=>entry.value===item));
-    }
-  }
-  return available.length ? available : arr.slice();
-}
-
-function rememberResult(n,value){
-  if(!value || value==="？？？" || value==="候補がありません")return;
-
-  if(!recentHistory[n])recentHistory[n]=[];
-
-  // 同じお題が履歴に残っていたら一度削除
-  recentHistory[n]=recentHistory[n].filter(entry=>entry.value!==value);
-
-  // cooldownCount回の「次の抽選」を禁止するため、残り回数を設定
-  recentHistory[n].push({
-    value:value,
-    remaining:cooldownCount
-  });
-
-  saveHistory();
-  renderCooldownList();
-}
-
-function saveHistory(){
-  try{
-    localStorage.setItem("mapleWandoroHistory",JSON.stringify(recentHistory));
-    localStorage.setItem("mapleWandoroCooldown",String(cooldownCount));
-  }catch(e){}
-}
-
-function advanceCooldowns(){
-  let changed=false;
-
-  [1,2,3].forEach(n=>{
-    if(!recentHistory[n])recentHistory[n]=[];
-
-    recentHistory[n].forEach(entry=>{
-      entry.remaining--;
-      changed=true;
-    });
-
-    // 残り0以下になったお題はクールタイム終了
-    const before=recentHistory[n].length;
-    recentHistory[n]=recentHistory[n].filter(entry=>entry.remaining>0);
-    if(before!==recentHistory[n].length)changed=true;
-  });
-
-  if(changed)saveHistory();
-}
-
-function saveCooldown(){
-  const value=Number(document.getElementById("cooldown").value);
-  if(!Number.isInteger(value) || value<1 || value>10)return;
-
-  cooldownCount=value;
-
-  // 設定変更時は現在の履歴の残り回数も新設定に合わせる
-  [1,2,3].forEach(n=>{
-    recentHistory[n]=(recentHistory[n]||[]).map(entry=>({
-      value:entry.value,
-      remaining:Math.min(entry.remaining,cooldownCount)
-    }));
-  });
-
-  saveHistory();
-  renderCooldownList();
-}
-
-function resetSingleCooldown(n,index){
-  if(!recentHistory[n] || !recentHistory[n][index])return;
-
-  const name=recentHistory[n][index].value;
-  recentHistory[n].splice(index,1);
-  saveHistory();
-  renderCooldownList();
-}
-
-function resetHistory(){
-  recentHistory={1:[],2:[],3:[]};
-  try{localStorage.removeItem("mapleWandoroHistory");}catch(e){}
-  renderCooldownList();
-  alert("再登場防止の履歴をリセットしました！");
-}
-
-function renderCooldownList(){
-  const container=document.getElementById("cooldownList");
-  if(!container)return;
-
-  const names={1:"① 職業",2:"② NPC",3:"③ なんでも"};
-  let html="";
-
-  [1,2,3].forEach(n=>{
-    const history=recentHistory[n]||[];
-    html+=`<div class="cooldown-group"><h3>${names[n]}</h3>`;
-
-    if(!history.length){
-      html+=`<div class="cooldown-empty">クールタイム中のお題はありません</div>`;
-    }else{
-      history.forEach((entry,index)=>{
-        const remaining=Math.max(0,entry.remaining);
-        html+=`
-          <div class="cooldown-item">
-            <span class="name">${escapeHtml(entry.value)}</span>
-            <span class="remain">あと <strong>${remaining}</strong> 回</span>
-            <button type="button" onclick="resetSingleCooldown(${n},${index})">解除</button>
-          </div>`;
-      });
-    }
-
-    html+="</div>";
-  });
-
-  container.innerHTML=html;
-}
-
-function escapeHtml(value){
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function spin(n){
-  const el=document.getElementById("display"+n);
-  const arr=getAvailableList(n);
-  if(!arr.length){el.textContent="候補がありません";return;}
-
-  el.classList.add("rolling");
-  let count=0;
-  const timer=setInterval(()=>{
-    el.textContent=pick(arr);
-    count++;
-    if(count>=16){
-      clearInterval(timer);
-      el.classList.remove("rolling");
-
-      // 1回の抽選が完了したので、既存のお題の残り回数を1減らす
-      advanceCooldowns();
-
-      // 今回出たお題を新しいクールタイムに登録
-      rememberResult(n,el.textContent);
-
-      updateResult();
-      renderCooldownList();
-    }
-  },70);
-}
-
-function spinAll(){
-  // 「3つまとめて」は1回の抽選として扱う。
-  // 各カテゴリを回すが、クールタイムの減少は最後に1回だけ行う。
-  const nums=[1,2,3];
-  const available={};
-
-  nums.forEach(n=>{
-    available[n]=getAvailableList(n);
-  });
-
-  // 候補がないカテゴリはそのまま表示
-  nums.forEach(n=>{
-    if(!available[n].length){
-      document.getElementById("display"+n).textContent="候補がありません";
-    }else{
-      document.getElementById("display"+n).classList.add("rolling");
-    }
-  });
-
-  let count=0;
-  const timer=setInterval(()=>{
-    nums.forEach(n=>{
-      if(available[n].length){
-        document.getElementById("display"+n).textContent=pick(available[n]);
+function getList(k){return (k===1?settings?.jobs:k===2?settings?.npcs:settings?.anything)||[];}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function animateSpin(keys,result){
+  return new Promise(resolve=>{
+    keys.forEach(k=>$('display'+k).classList.add('rolling'));
+    let tick=0;
+    const timer=setInterval(()=>{
+      keys.forEach(k=>{$('display'+k).textContent=pick(getList(k))||'？？？';});
+      if(++tick>=16){
+        clearInterval(timer);
+        keys.forEach(k=>{$('display'+k).classList.remove('rolling');$('display'+k).textContent=result[columns[k]]||'？？？';});
+        resolve();
       }
-    });
-
-    count++;
-    if(count>=16){
-      clearInterval(timer);
-
-      nums.forEach(n=>{
-        document.getElementById("display"+n).classList.remove("rolling");
-      });
-
-
-      // 3つ同時に回しても1回しか進ませない
-      advanceCooldowns();
-
-      // 今回出た3つを、それぞれ新しいクールタイムに登録
-      nums.forEach(n=>{
-        const el=document.getElementById("display"+n);
-        if(el.textContent!=="候補がありません"){
-          rememberResult(n,el.textContent);
-        }
-      });
-
-      updateResult();
-      renderCooldownList();
-    }
-  },70);
+    },70);
+  });
 }
-
-function updateResult(){
-  const a=[1,2,3].map(n=>document.getElementById("display"+n).textContent);
-  document.getElementById("resultText").innerHTML =
-    `① ${a[0]}　② ${a[1]}　③ ${a[2]}`;
+async function spin(n){await runSpin(n);}
+async function spinAll(){await runSpin(0);}
+async function runSpin(category){
+  if(busy||!canSpin())return;
+  busy=true;setButtons();setStatus('抽選中…');
+  try{
+    const {data,error}=await db.rpc('spin_wandoro',{p_category:category});
+    if(error)throw error;
+    const row=Array.isArray(data)?data[0]:data;
+    if(!row)throw new Error('抽選結果を取得できませんでした');
+    await animateSpin(category===0?[1,2,3]:[category],row);
+    const a=[1,2,3].map(k=>$('display'+k).textContent);
+    $('resultText').textContent='① '+a[0]+'　② '+a[1]+'　③ '+a[2];
+    await refreshData();
+  }catch(e){console.error(e);setStatus('抽選エラー: '+e.message);alert('抽選に失敗しました：'+e.message);}
+  finally{busy=false;setButtons();}
 }
-loadLists();
-renderCooldownList();
-</script>
-</body>
-</html>
+async function refreshAdmin(){
+  const {data:{user},error}=await db.auth.getUser();
+  if(error)console.warn(error);
+  let allowed=false;
+  if(user){const r=await db.rpc('is_wandoro_admin');allowed=!r.error&&r.data===true;}
+  isAdmin=allowed;
+  $('loginArea').hidden=!!user;
+  $('adminLoggedIn').hidden=!user;
+  $('adminIdentity').textContent=user?(user.email||'ログイン中')+(allowed?'（管理者）':'（管理者権限がありません）'):'';
+  $('adminControls').classList.toggle('visible',allowed);
+  if(allowed)fillEditor();
+}
+async function adminLogin(){
+  const email=$('adminEmail').value.trim(),password=$('adminPassword').value;
+  if(!email||!password){alert('メールアドレスとパスワードを入力してください');return;}
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(error){alert('ログイン失敗: '+error.message);return;}
+  $('adminPassword').value='';await refreshAdmin();
+}
+async function adminLogout(){await db.auth.signOut();await refreshAdmin();}
+async function saveSharedSettings(){
+  if(!isAdmin)return;
+  const jobs=parseLines('jobs'),npcs=parseLines('npc'),anything=parseLines('anything'),cooldown=Number($('cooldown').value);
+  if(!jobs.length||!npcs.length||!anything.length){alert('3つのカテゴリすべてに1件以上登録してください');return;}
+  const {error}=await db.rpc('save_wandoro_settings',{p_jobs:jobs,p_npcs:npcs,p_anything:anything,p_cooldown:cooldown});
+  if(error){alert('保存失敗: '+error.message);return;}
+  alert('共有設定を保存しました！');await refreshData();fillEditor();
+}
+async function resetSharedHistory(){
+  if(!isAdmin||!confirm('全員の抽選履歴をすべて削除します。元に戻せません。よろしいですか？'))return;
+  const {error}=await db.rpc('reset_wandoro_history');
+  if(error){alert('削除失敗: '+error.message);return;}
+  [1,2,3].forEach(k=>$('display'+k).textContent='？？？');$('resultText').textContent='まだ抽選していません';
+  await refreshData();
+}
+(async()=>{
+  try{await Promise.all([refreshData(),refreshAdmin()]);}
+  catch(e){console.error(e);setStatus('初期化に失敗しました: '+e.message);}
+  setInterval(()=>{if(!busy && document.visibilityState==='visible')refreshData();},15000);
+})();
+</script></body></html>
